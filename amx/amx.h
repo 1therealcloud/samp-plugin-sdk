@@ -31,6 +31,9 @@
 #ifndef AMX_H_INCLUDED
 #define AMX_H_INCLUDED
 
+#include <stdlib.h>   /* for size_t */
+#include <limits.h>
+
 #if defined HAVE_STDINT_H
   #include <stdint.h>
 #else
@@ -92,6 +95,15 @@
 
 #if !defined arraysize
   #define arraysize(array)  (sizeof(array) / sizeof((array)[0]))
+#endif
+#if !defined assert_static
+  /* see "Compile-Time Assertions" by Ralf Holly,
+   * C/C++ Users Journal, November 2004
+   */
+  #define assert_static(e) \
+    do { \
+      enum { assert_static__ = 1/(e) }; \
+    } while (0)
 #endif
 
 #ifdef  __cplusplus
@@ -158,7 +170,7 @@ extern  "C" {
   #error Unsupported cell size (PAWN_CELL_SIZE)
 #endif
 
-#define UNPACKEDMAX   ((1L << (sizeof(cell)-1)*8) - 1)
+#define UNPACKEDMAX   (((cell)1 << (sizeof(cell)-1)*8) - 1)
 #define UNLIMITED     (~1u >> 1)
 
 struct tagAMX;
@@ -208,7 +220,9 @@ typedef struct tagAMX_NATIVE_INFO {
   AMX_NATIVE func       PACKED;
 } PACKED AMX_NATIVE_INFO;
 
+#if !defined AMX_USERNUM
 #define AMX_USERNUM     4
+#endif
 #define sEXPMAX         19      /* maximum name length for file version <= 6 */
 #define sNAMEMAX        31      /* maximum name length of symbol name */
 
