@@ -15,6 +15,7 @@
  * have a complete emacs/vi like line editing system.
  */
 #include "getch.h"
+#include <strings.h>
 
 #define	stricmp(a,b)    strcasecmp(a,b)
 #define	strnicmp(a,b,c) strncasecmp(a,b,c)
@@ -30,15 +31,17 @@
  * (and defines) the macros BYTE_ORDER and BIG_ENDIAN.
  * For Linux, we must overrule these settings with those defined in glibc.
  */
-#if !defined __BYTE_ORDER
-# include <stdlib.h>
+#if !defined __BYTE_ORDER && defined __BYTE_ORDER__
+# define __BYTE_ORDER    __BYTE_ORDER__
+# define __LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+# define __BIG_ENDIAN    __ORDER_BIG_ENDIAN__
 #endif
 
-#if defined __APPLE__
+#if !defined __BYTE_ORDER && defined __APPLE__
 # include <machine/endian.h>
 #endif
 
-#if defined __OpenBSD__ || defined __FreeBSD__ || defined __APPLE__
+#if !defined __BYTE_ORDER && (defined __OpenBSD__ || defined __FreeBSD__ || defined __APPLE__)
 # define __BYTE_ORDER    BYTE_ORDER
 # define __LITTLE_ENDIAN LITTLE_ENDIAN
 # define __BIG_ENDIAN    BIG_ENDIAN

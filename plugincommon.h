@@ -19,25 +19,56 @@
   #define PLUGIN_EXTERN_C
 #endif
 
-#if defined(LINUX) || defined(FREEBSD) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-  #ifndef __GNUC__
-	#pragma message "Warning: Not using a GNU compiler."
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+  #define SAMP_PLUGIN_WINDOWS 1
+  #if !defined(WIN32)
+	#define WIN32 1
   #endif
-  #define PLUGIN_CALL 
+#elif defined(__linux__) || defined(LINUX)
+  #define SAMP_PLUGIN_LINUX 1
+  #if !defined(LINUX)
+	#define LINUX 1
+  #endif
+#elif defined(FREEBSD) || defined(__FreeBSD__) || defined(__OpenBSD__)
+  #define SAMP_PLUGIN_BSD 1
+#elif defined(__APPLE__)
+  #define SAMP_PLUGIN_APPLE 1
+#else
+  #error "Unsupported platform"
+#endif
+
+#if defined(_MSC_VER)
+  #define SAMP_PLUGIN_MSVC 1
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+  #define SAMP_PLUGIN_MINGW 1
+#elif defined(__clang__)
+  #define SAMP_PLUGIN_CLANG 1
+#elif defined(__GNUC__)
+  #define SAMP_PLUGIN_GCC 1
+#else
+  #error "Unsupported compiler"
+#endif
+
+#if defined(SAMP_PLUGIN_WINDOWS)
+  #if defined(_MSC_VER)
+	#define PLUGIN_CALL __stdcall
+  #elif defined(__GNUC__) || defined(__clang__)
+	#define PLUGIN_CALL __attribute__((stdcall))
+  #else
+	#error "Unsupported Windows compiler"
+  #endif
+
+  // Windows exports are handled by the linker/module definition file so that
+  // stdcall entry points keep the undecorated names expected by the server.
+  #define PLUGIN_EXPORT PLUGIN_EXTERN_C
+#else
+  #define PLUGIN_CALL
   #ifndef SAMPSVR
 	// Compile code with -fvisibility=hidden to hide non-exported functions.
 	#define PLUGIN_EXPORT PLUGIN_EXTERN_C __attribute__((visibility("default")))
   #else
 	#define PLUGIN_EXPORT PLUGIN_EXTERN_C
   #endif
-#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-  #ifndef _MSC_VER
-	#pragma message "Warning: Not using a VC++ compiler."
-  #endif
-  #define PLUGIN_CALL __stdcall
-  #define PLUGIN_EXPORT PLUGIN_EXTERN_C
-#else
-  #error "You must define one of WIN32, LINUX or FREEBSD"
 #endif
 
 //----------------------------------------------------------

@@ -21,10 +21,16 @@
  *  Version: $Id: amx.h,v 1.5 2006/03/26 16:56:15 spookie Exp $
  */
 
+#if defined __linux__ && !defined LINUX
+  #define LINUX
+#endif
+#if defined _WIN32 && !defined WIN32
+  #define WIN32
+#endif
 #if defined FREEBSD && !defined __FreeBSD__
   #define __FreeBSD__
 #endif
-#if defined LINUX || defined __FreeBSD__ || defined __OpenBSD__
+#if defined LINUX || defined __FreeBSD__ || defined __OpenBSD__ || defined __APPLE__
   #include "sclinux.h"
 #endif
 
@@ -70,12 +76,27 @@
 extern  "C" {
 #endif
 
+#if defined _WIN32
+  #if defined _MSC_VER
+	#define AMX_STDCALL __stdcall
+	#define AMX_CDECL   __cdecl
+  #elif defined __GNUC__ || defined __clang__
+	#define AMX_STDCALL __attribute__((stdcall))
+	#define AMX_CDECL   __attribute__((cdecl))
+  #else
+	#error Unsupported Windows compiler
+  #endif
+#else
+  #define AMX_STDCALL
+  #define AMX_CDECL
+#endif
+
 #if defined PAWN_DLL
   #if !defined AMX_NATIVE_CALL
-	#define AMX_NATIVE_CALL __stdcall
+	#define AMX_NATIVE_CALL AMX_STDCALL
   #endif
   #if !defined AMXAPI
-	#define AMXAPI          __stdcall
+	#define AMXAPI          AMX_STDCALL
   #endif
 #endif
 
@@ -86,9 +107,9 @@ extern  "C" {
 /* calling convention for all interface functions and callback functions */
 #if !defined AMXAPI
   #if defined STDECL
-	#define AMXAPI      __stdcall
+	#define AMXAPI      AMX_STDCALL
   #elif defined CDECL
-	#define AMXAPI      __cdecl
+	#define AMXAPI      AMX_CDECL
   #elif defined GCC_HASCLASSVISIBILITY
 	#define AMXAPI __attribute__ ((visibility("default")))
   #else
@@ -151,11 +172,11 @@ typedef int (AMXAPI *AMX_DEBUG)(struct tagAMX *amx);
 /* Some compilers do not support the #pragma align, which should be fine. Some
  * compilers give a warning on unknown #pragmas, which is not so fine...
  */
-#if (defined SN_TARGET_PS2 || defined __GNUC__) && !defined AMX_NO_ALIGN
+#if (defined SN_TARGET_PS2 || defined __GNUC__ || defined __clang__) && !defined AMX_NO_ALIGN
   #define AMX_NO_ALIGN
 #endif
 
-#if defined __GNUC__
+#if defined __GNUC__ || defined __clang__
   #define PACKED        __attribute__((packed))
 #else
   #define PACKED
