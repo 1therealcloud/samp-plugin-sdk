@@ -44,7 +44,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/SampPlugin.cmake")
 option(
     SAMP_PLUGIN_SDK_BUILD_EXAMPLE
     "Build the example SA-MP plugin"
-    ${PROJECT_IS_TOP_LEVEL}
+    OFF
 )
 
 if(SAMP_PLUGIN_SDK_BUILD_EXAMPLE)
