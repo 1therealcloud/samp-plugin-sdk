@@ -26,6 +26,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
+
+#if !defined(_M_IX86) && !defined(__i386__)
+  #error SA-MP Plugin SDK supports x86 only
+#endif
+
 #if !defined HAVE_I64
   #define HAVE_I64
 #endif
@@ -114,21 +120,15 @@ extern  "C" {
 #define MIN_FILE_VERSION  6     /* lowest supported file format version for the current AMX version */
 #define MIN_AMX_VERSION   8     /* minimum AMX version needed to support the current file format */
 
+#if defined PAWN_CELL_SIZE && PAWN_CELL_SIZE != 32
+  #error SA-MP requires 32-bit Pawn cells
+#endif
 #if !defined PAWN_CELL_SIZE
-  #define PAWN_CELL_SIZE 32     /* by default, use 32-bit cells */
+  #define PAWN_CELL_SIZE 32
 #endif
-#if PAWN_CELL_SIZE==16
-  typedef uint16_t  ucell;
-  typedef int16_t   cell;
-#elif PAWN_CELL_SIZE==32
-  typedef uint32_t  ucell;
-  typedef int32_t   cell;
-#elif PAWN_CELL_SIZE==64
-  typedef uint64_t  ucell;
-  typedef int64_t   cell;
-#else
-  #error Unsupported cell size (PAWN_CELL_SIZE)
-#endif
+
+typedef uint32_t ucell;
+typedef int32_t cell;
 
 #define UNPACKEDMAX   (((cell)1 << (sizeof(cell)-1)*8) - 1)
 #define UNLIMITED     (~1u >> 1)
@@ -227,13 +227,7 @@ typedef struct tagAMX_HEADER {
   int32_t nametable     PACKED; /* name table */
 } PACKED AMX_HEADER;
 
-#if PAWN_CELL_SIZE==16
-  #define AMX_MAGIC     0xf1e2
-#elif PAWN_CELL_SIZE==32
-  #define AMX_MAGIC     0xf1e0
-#elif PAWN_CELL_SIZE==64
-  #define AMX_MAGIC     0xf1e1
-#endif
+#define AMX_MAGIC       0xf1e0
 
 enum {
   AMX_ERR_NONE,
@@ -285,19 +279,23 @@ enum {
   #define AMX_COMPACTMARGIN 64
 #endif
 
-/* for native functions that use floating point parameters, the following
- * two macros are convenient for casting a "cell" into a "float" type _without_
- * changing the bit pattern
- */
-#if PAWN_CELL_SIZE==32
-  #define amx_ftoc(f)   ( * ((cell*)&f) )   /* float to cell */
-  #define amx_ctof(c)   ( * ((float*)&c) )  /* cell to float */
-#elif PAWN_CELL_SIZE==64
-  #define amx_ftoc(f)   ( * ((cell*)&f) )   /* float to cell */
-  #define amx_ctof(c)   ( * ((double*)&c) ) /* cell to float */
-#else
-  #error Unsupported cell size
-#endif
+/* Convert between Pawn cells and floats without changing the bit pattern. */
+static inline cell amx_ftoc_impl(float value)
+{
+  cell result;
+  memcpy(&result, &value, sizeof(result));
+  return result;
+}
+
+static inline float amx_ctof_impl(cell value)
+{
+  float result;
+  memcpy(&result, &value, sizeof(result));
+  return result;
+}
+
+#define amx_ftoc(f) amx_ftoc_impl((float)(f))
+#define amx_ctof(c) amx_ctof_impl((cell)(c))
 
 #define amx_StrParam(amx,param,result)                                      \
 	do {                                                                    \
@@ -357,15 +355,7 @@ int AMXAPI amx_UTF8Get(const char *string, const char **endptr, cell *value);
 int AMXAPI amx_UTF8Len(const cell *cstr, int *length);
 int AMXAPI amx_UTF8Put(char *string, char **endptr, int maxchars, cell value);
 
-#if PAWN_CELL_SIZE==16
-  #define amx_AlignCell(v) amx_Align16(v)
-#elif PAWN_CELL_SIZE==32
-  #define amx_AlignCell(v) amx_Align32(v)
-#elif PAWN_CELL_SIZE==64 && (defined _I64_MAX || defined HAVE_I64)
-  #define amx_AlignCell(v) amx_Align64(v)
-#else
-  #error Unsupported cell size
-#endif
+#define amx_AlignCell(v) amx_Align32(v)
 
 #define amx_RegisterFunc(amx, name, func) \
   amx_Register((amx), amx_NativeInfo((name),(func)), 1);
