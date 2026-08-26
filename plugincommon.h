@@ -20,36 +20,36 @@
 #endif
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-  #define SAMP_PLUGIN_WINDOWS 1
+  #define SAMP_PLATFORM_WINDOWS 1
   #if !defined(WIN32)
 	#define WIN32 1
   #endif
 #elif defined(__linux__) || defined(LINUX)
-  #define SAMP_PLUGIN_LINUX 1
+  #define SAMP_PLATFORM_LINUX 1
   #if !defined(LINUX)
 	#define LINUX 1
   #endif
 #elif defined(FREEBSD) || defined(__FreeBSD__) || defined(__OpenBSD__)
-  #define SAMP_PLUGIN_BSD 1
+  #define SAMP_PLATFORM_BSD 1
 #elif defined(__APPLE__)
-  #define SAMP_PLUGIN_APPLE 1
+  #define SAMP_PLATFORM_APPLE 1
 #else
   #error "Unsupported platform"
 #endif
 
 #if defined(_MSC_VER)
-  #define SAMP_PLUGIN_MSVC 1
+  #define SAMP_COMPILER_MSVC 1
 #elif defined(__MINGW32__) || defined(__MINGW64__)
-  #define SAMP_PLUGIN_MINGW 1
+  #define SAMP_COMPILER_MINGW 1
 #elif defined(__clang__)
-  #define SAMP_PLUGIN_CLANG 1
+  #define SAMP_COMPILER_CLANG 1
 #elif defined(__GNUC__)
-  #define SAMP_PLUGIN_GCC 1
+  #define SAMP_COMPILER_GCC 1
 #else
   #error "Unsupported compiler"
 #endif
 
-#if defined(SAMP_PLUGIN_WINDOWS)
+#if defined(SAMP_PLATFORM_WINDOWS)
   #if defined(_MSC_VER)
 	#define PLUGIN_CALL __stdcall
   #elif defined(__GNUC__) || defined(__clang__)
