@@ -110,12 +110,12 @@ void AMXAPI amx_Redirect(AMX *amx, char *from, ucell to, AMX_NATIVE *store)
 {
 	AMX_HEADER *hdr = (AMX_HEADER *)amx->base;
 	int idx;
-	int num = (int)NUMENTRIES(hdr, natives, libraries);
+	int num = (int)amx2_NumEntries(hdr, hdr->natives, hdr->libraries);
 
 	for (idx = 0; idx != num; ++idx)
 	{
-		AMX_FUNCSTUB *func = GETENTRY(hdr, natives, idx);
-		if (strcmp(from, GETENTRYNAME(hdr, func)) != 0)
+		AMX_FUNCSTUB *func = amx2_GetEntry(hdr, hdr->natives, (unsigned)idx);
+		if (strcmp(from, amx2_GetEntryName(hdr, func)) != 0)
 			continue;
 
 		if (store != NULL)

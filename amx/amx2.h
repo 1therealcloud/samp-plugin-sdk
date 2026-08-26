@@ -21,19 +21,46 @@
 
 //----------------------------------------------------------
 
+static inline int amx2_UseNameTable(const AMX_HEADER *hdr)
+{
+	return hdr->defsize == (int16_t)sizeof(AMX_FUNCSTUBNT);
+}
+
+static inline unsigned amx2_NumEntries(const AMX_HEADER *hdr, int32_t first, int32_t next)
+{
+	return (unsigned)(((uint32_t)next - (uint32_t)first) / (uint16_t)hdr->defsize);
+}
+
+static inline AMX_FUNCSTUB *amx2_GetEntry(AMX_HEADER *hdr, int32_t table, unsigned index)
+{
+	return (AMX_FUNCSTUB *)((unsigned char *)hdr
+		+ (uint32_t)table
+		+ (size_t)index * (uint16_t)hdr->defsize);
+}
+
+static inline char *amx2_GetEntryName(AMX_HEADER *hdr, AMX_FUNCSTUB *entry)
+{
+	if (amx2_UseNameTable(hdr))
+	{
+		AMX_FUNCSTUBNT *entryNT = (AMX_FUNCSTUBNT *)entry;
+		return (char *)((unsigned char *)hdr + entryNT->nameofs);
+	}
+
+	return entry->name;
+}
+
+/* Legacy helper names kept for source compatibility. */
 #define USENAMETABLE(hdr) \
-	((hdr)->defsize==sizeof(AMX_FUNCSTUBNT))
+	amx2_UseNameTable((hdr))
 
 #define NUMENTRIES(hdr,field,nextfield) \
-	(unsigned)(((hdr)->nextfield - (hdr)->field) / (hdr)->defsize)
+	amx2_NumEntries((hdr), (hdr)->field, (hdr)->nextfield)
 
 #define GETENTRY(hdr,table,index) \
-	(AMX_FUNCSTUB *)((unsigned char*)(hdr) + (unsigned)(hdr)->table + (unsigned)index*(hdr)->defsize)
+	amx2_GetEntry((hdr), (hdr)->table, (unsigned)(index))
 
 #define GETENTRYNAME(hdr,entry) \
-	(USENAMETABLE(hdr) ? \
-		(char *)((unsigned char*)(hdr) + (unsigned)((AMX_FUNCSTUBNT*)(entry))->nameofs) : \
-		((AMX_FUNCSTUB*)(entry))->name)
+	amx2_GetEntryName((hdr), (AMX_FUNCSTUB *)(entry))
 
 //----------------------------------------------------------
 
