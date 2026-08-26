@@ -108,3 +108,4 @@ inline int AMXAPI amx_SetCppString(AMX *amx, cell param, const std::string &str,
 
 //----------------------------------------------------------
 // EOF
+

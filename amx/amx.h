@@ -411,3 +411,4 @@ int AMXAPI amx_UTF8Put(char *string, char **endptr, int maxchars, cell value);
 #endif
 
 #endif /* AMX_H_INCLUDED */
+
