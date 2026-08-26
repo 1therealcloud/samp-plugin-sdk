@@ -53,7 +53,7 @@ function(samp_add_plugin target)
     )
 
     if(WIN32)
-        set(exports
+        string(CONCAT exports
             "EXPORTS\n"
             "    Supports\n"
             "    Load\n"
@@ -86,4 +86,3 @@ function(samp_add_plugin target)
         target_sources("${target}" PRIVATE "${def_file}")
     endif()
 endfunction()
-
