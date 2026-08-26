@@ -21,26 +21,11 @@
  *  Version: $Id: amx.h,v 1.5 2006/03/26 16:56:15 spookie Exp $
  */
 
-#if defined __linux__ && !defined LINUX
-  #define LINUX
-#endif
-#if defined _WIN32 && !defined WIN32
-  #define WIN32
-#endif
-#if defined FREEBSD && !defined __FreeBSD__
-  #define __FreeBSD__
-#endif
-
 #ifndef AMX_H_INCLUDED
 #define AMX_H_INCLUDED
 
-#include <stdlib.h>   /* for size_t */
-#include <limits.h>
+#include <stddef.h>
 #include <stdint.h>
-
-#if !defined HAVE_STDINT_H
-  #define HAVE_STDINT_H
-#endif
 #if !defined HAVE_I64
   #define HAVE_I64
 #endif
@@ -113,9 +98,6 @@ extern  "C" {
 	#define AMXAPI
   #endif
 #endif
-#if !defined AMXEXPORT
-  #define AMXEXPORT
-#endif
 
 /* File format version                          Required AMX version
  *   0 (original version)                       0
@@ -156,45 +138,17 @@ typedef cell (AMX_NATIVE_CALL *AMX_NATIVE)(struct tagAMX *amx, cell *params);
 typedef int (AMXAPI *AMX_CALLBACK)(struct tagAMX *amx, cell index,
 								   cell *result, cell *params);
 typedef int (AMXAPI *AMX_DEBUG)(struct tagAMX *amx);
-#if !defined _FAR
-  #define _FAR
-#endif
-
 #if defined _MSC_VER
-  #pragma warning(disable:4103)  /* disable warning message 4103 that complains
-								  * about pragma pack in a header file */
-  #pragma warning(disable:4100)  /* "'%$S' : unreferenced formal parameter" */
-#endif
-
-/* Some compilers do not support the #pragma align, which should be fine. Some
- * compilers give a warning on unknown #pragmas, which is not so fine...
- */
-#if (defined SN_TARGET_PS2 || defined __GNUC__ || defined __clang__) && !defined AMX_NO_ALIGN
-  #define AMX_NO_ALIGN
-#endif
-
-#if defined __GNUC__ || defined __clang__
-  #define PACKED        __attribute__((packed))
-#else
   #define PACKED
-#endif
-
-#if !defined AMX_NO_ALIGN
-  #if defined LINUX || defined __FreeBSD__
-	#pragma pack(1)         /* structures must be packed (byte-aligned) */
-  #elif defined MACOS && defined __MWERKS__
-	#pragma options align=mac68k
-  #else
-	#pragma pack(push)
-	#pragma pack(1)         /* structures must be packed (byte-aligned) */
-	#if defined __TURBOC__
-	  #pragma option -a-    /* "pack" pragma for older Borland compilers */
-	#endif
-  #endif
+  #pragma pack(push, 1)
+#elif defined __GNUC__ || defined __clang__
+  #define PACKED __attribute__((packed))
+#else
+  #error Unsupported compiler
 #endif
 
 typedef struct tagAMX_NATIVE_INFO {
-  const char _FAR *name PACKED;
+  const char *name PACKED;
   AMX_NATIVE func       PACKED;
 } PACKED AMX_NATIVE_INFO;
 
@@ -218,8 +172,8 @@ typedef struct tagFUNCSTUBNT {
  * fields are valid at all times; many fields are cached in local variables.
  */
 typedef struct tagAMX {
-  unsigned char _FAR *base PACKED; /* points to the AMX header plus the code, optionally also the data */
-  unsigned char _FAR *data PACKED; /* points to separate data+stack+heap, may be NULL */
+  unsigned char *base PACKED; /* points to the AMX header plus the code, optionally also the data */
+  unsigned char *data PACKED; /* points to separate data+stack+heap, may be NULL */
   AMX_CALLBACK callback PACKED;
   AMX_DEBUG debug       PACKED; /* debug callback */
   /* for external functions a few registers must be accessible from the outside */
@@ -232,7 +186,7 @@ typedef struct tagAMX {
   int flags             PACKED; /* current status, see amx_Flags() */
   /* user data */
   long usertags[AMX_USERNUM] PACKED;
-  void _FAR *userdata[AMX_USERNUM] PACKED;
+  void *userdata[AMX_USERNUM] PACKED;
   /* native functions can raise an error */
   int error             PACKED;
   /* passing parameters requires a "count" field */
@@ -416,14 +370,8 @@ int AMXAPI amx_UTF8Put(char *string, char **endptr, int maxchars, cell value);
 #define amx_RegisterFunc(amx, name, func) \
   amx_Register((amx), amx_NativeInfo((name),(func)), 1);
 
-#if !defined AMX_NO_ALIGN
-  #if defined LINUX || defined __FreeBSD__
-	#pragma pack()    /* reset default packing */
-  #elif defined MACOS && defined __MWERKS__
-	#pragma options align=reset
-  #else
-	#pragma pack(pop) /* reset previous packing */
-  #endif
+#if defined _MSC_VER
+  #pragma pack(pop)
 #endif
 
 #ifdef  __cplusplus
