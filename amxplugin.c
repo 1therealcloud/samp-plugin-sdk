@@ -13,9 +13,10 @@
 
 //----------------------------------------------------------
 
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
+#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 //----------------------------------------------------------
 
@@ -28,20 +29,11 @@ void *pAMXFunctions;
 
 //----------------------------------------------------------
 
-namespace
-{
-	template <typename Function>
-	Function GetAMXFunction(PLUGIN_AMX_EXPORT index)
-	{
-		return static_cast<Function *>(pAMXFunctions)[index];
-	}
-}
-
 #define AMX_FORWARD(return_type, name, parameters, arguments) \
 	return_type AMXAPI amx_##name parameters                    \
-	{                                                           \
-		typedef return_type (AMXAPI *Function) parameters;        \
-		return GetAMXFunction<Function>(PLUGIN_AMX_EXPORT_##name) arguments; \
+	{                                                            \
+		typedef return_type (AMXAPI *Function) parameters;         \
+		return ((Function *)pAMXFunctions)[PLUGIN_AMX_EXPORT_##name] arguments; \
 	}
 
 AMX_FORWARD(uint16_t *, Align16, (uint16_t *v), (v))
@@ -117,14 +109,17 @@ int AMXAPI amx_PushAddress(AMX *amx, cell *address)
 void AMXAPI amx_Redirect(AMX *amx, char *from, ucell to, AMX_NATIVE *store)
 {
 	AMX_HEADER *hdr = (AMX_HEADER *)amx->base;
-	for (int idx = 0, num = NUMENTRIES(hdr, natives, libraries); idx != num; ++idx)
+	int idx;
+	int num = (int)NUMENTRIES(hdr, natives, libraries);
+
+	for (idx = 0; idx != num; ++idx)
 	{
 		AMX_FUNCSTUB *func = GETENTRY(hdr, natives, idx);
 		if (strcmp(from, GETENTRYNAME(hdr, func)) != 0)
 			continue;
 
 		if (store != NULL)
-			*store = (AMX_NATIVE)func->address;
+			*store = (AMX_NATIVE)(uintptr_t)func->address;
 
 		func->address = to;
 		return;
@@ -133,22 +128,26 @@ void AMXAPI amx_Redirect(AMX *amx, char *from, ucell to, AMX_NATIVE *store)
 
 int AMXAPI amx_GetCStringEx(AMX *amx, cell param, char **dest)
 {
+	cell *ptr;
+	int length;
+	int error;
+	char *string;
+
 	if (dest == NULL)
 		return AMX_ERR_PARAMS;
 
 	*dest = NULL;
-
-	cell *ptr = NULL;
-	int error = amx_GetAddr(amx, param, &ptr);
+	ptr = NULL;
+	error = amx_GetAddr(amx, param, &ptr);
 	if (error != AMX_ERR_NONE)
 		return error;
 
-	int length = 0;
+	length = 0;
 	error = amx_StrLen(ptr, &length);
 	if (error != AMX_ERR_NONE)
 		return error;
 
-	char *string = (char *)malloc((size_t)length + 1);
+	string = (char *)malloc((size_t)length + 1);
 	if (string == NULL)
 		return AMX_ERR_MEMORY;
 
@@ -170,54 +169,7 @@ int AMXAPI amx_SetCString(AMX *amx, cell param, const char *str, int len)
 	if (error != AMX_ERR_NONE)
 		return error;
 
-	return amx_SetString(dest, str, 0, 0, len);
-}
-
-int AMXAPI amx_GetCString(AMX *amx, cell param, char *&dest)
-{
-	int error = amx_GetCStringEx(amx, param, &dest);
-	if (error != AMX_ERR_NONE)
-		return 0;
-
-	int length = 0;
-	cell *ptr = NULL;
-	if (amx_GetAddr(amx, param, &ptr) != AMX_ERR_NONE ||
-		amx_StrLen(ptr, &length) != AMX_ERR_NONE)
-	{
-		free(dest);
-		dest = NULL;
-		return 0;
-	}
-
-	return length;
-}
-
-std::string AMXAPI amx_GetCppString(AMX *amx, cell param)
-{
-	cell *addr = NULL;
-	if (amx_GetAddr(amx, param, &addr) != AMX_ERR_NONE)
-		return std::string();
-
-	int length = 0;
-	if (amx_StrLen(addr, &length) != AMX_ERR_NONE || length <= 0)
-		return std::string();
-
-	std::string string((size_t)length + 1, '\0');
-	if (amx_GetString(&string[0], addr, 0, string.size()) != AMX_ERR_NONE)
-		return std::string();
-
-	string.resize((size_t)length);
-	return string;
-}
-
-int AMXAPI amx_SetCppString(AMX *amx, cell param, const std::string &str, size_t maxlen)
-{
-	cell *dest = NULL;
-	int error = amx_GetAddr(amx, param, &dest);
-	if (error != AMX_ERR_NONE)
-		return error;
-
-	return amx_SetString(dest, str.c_str(), 0, 0, maxlen);
+	return amx_SetString(dest, str, 0, 0, (size_t)len);
 }
 
 //----------------------------------------------------------

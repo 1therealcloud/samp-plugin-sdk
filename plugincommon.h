@@ -73,17 +73,17 @@
 
 //----------------------------------------------------------
 
-enum SUPPORTS_FLAGS
+typedef enum SUPPORTS_FLAGS
 {
 	SUPPORTS_VERSION		= SAMP_PLUGIN_VERSION,
 	SUPPORTS_VERSION_MASK	= 0xffff,
 	SUPPORTS_AMX_NATIVES	= 0x10000,
 	SUPPORTS_PROCESS_TICK	= 0x20000
-};
+} SUPPORTS_FLAGS;
 
 //----------------------------------------------------------
 
-enum PLUGIN_DATA_TYPE
+typedef enum PLUGIN_DATA_TYPE
 {
     // For some debugging
     PLUGIN_DATA_LOGPRINTF       = 0x00, // void (*logprintf)(char* format, ...)
@@ -98,11 +98,11 @@ enum PLUGIN_DATA_TYPE
     PLUGIN_DATA_CALLPUBLIC_FS   = 0x11, // int (*AmxCallPublicFilterScript)(char *szFunctionName)
     PLUGIN_DATA_CALLPUBLIC_GM   = 0x12, // int (*AmxCallPublicGameMode)(char *szFunctionName)
 
-};
+} PLUGIN_DATA_TYPE;
 
 //----------------------------------------------------------
 
-enum PLUGIN_AMX_EXPORT
+typedef enum PLUGIN_AMX_EXPORT
 {
 	PLUGIN_AMX_EXPORT_Align16		= 0,
 	PLUGIN_AMX_EXPORT_Align32		= 1,
@@ -148,7 +148,19 @@ enum PLUGIN_AMX_EXPORT
 	PLUGIN_AMX_EXPORT_UTF8Get		= 41,
 	PLUGIN_AMX_EXPORT_UTF8Len		= 42,
 	PLUGIN_AMX_EXPORT_UTF8Put		= 43,
-};
+} PLUGIN_AMX_EXPORT;
+
+//----------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void *pAMXFunctions;
+
+#ifdef __cplusplus
+}
+#endif
 
 //----------------------------------------------------------
 // EOF
