@@ -152,8 +152,10 @@ typedef struct tagAMX_NATIVE_INFO {
   AMX_NATIVE func       PACKED;
 } PACKED AMX_NATIVE_INFO;
 
-#if !defined AMX_USERNUM
-#define AMX_USERNUM     4
+#if defined AMX_USERNUM && AMX_USERNUM != 4
+  #error SA-MP requires AMX_USERNUM to be 4
+#elif !defined AMX_USERNUM
+  #define AMX_USERNUM 4
 #endif
 #define sEXPMAX         19      /* maximum name length for file version <= 6 */
 #define sNAMEMAX        31      /* maximum name length of symbol name */
@@ -226,6 +228,46 @@ typedef struct tagAMX_HEADER {
   int32_t tags          PACKED; /* the "public tagnames" table */
   int32_t nametable     PACKED; /* name table */
 } PACKED AMX_HEADER;
+
+/*
+ * SA-MP's AMX ABI is fixed to the 32-bit layout below. Keep these checks
+ * close to the structure definitions so packing or type changes fail at
+ * compile time instead of corrupting AMX state at runtime.
+ */
+#if defined __cplusplus
+  #define AMX_ABI_ASSERT(expression, message) static_assert((expression), message)
+#else
+  #define AMX_ABI_ASSERT(expression, message) _Static_assert((expression), message)
+#endif
+
+AMX_ABI_ASSERT(sizeof(void *) == 4, "SA-MP requires 32-bit pointers");
+AMX_ABI_ASSERT(sizeof(long) == 4, "SA-MP requires 32-bit long");
+AMX_ABI_ASSERT(sizeof(cell) == 4, "SA-MP requires 32-bit cells");
+AMX_ABI_ASSERT(sizeof(ucell) == 4, "SA-MP requires 32-bit cells");
+AMX_ABI_ASSERT(sizeof(AMX_NATIVE) == 4, "unexpected AMX native pointer size");
+
+AMX_ABI_ASSERT(sizeof(AMX_NATIVE_INFO) == 8, "unexpected AMX_NATIVE_INFO layout");
+AMX_ABI_ASSERT(sizeof(AMX_FUNCSTUB) == 24, "unexpected AMX_FUNCSTUB layout");
+AMX_ABI_ASSERT(sizeof(AMX_FUNCSTUBNT) == 8, "unexpected AMX_FUNCSTUBNT layout");
+
+AMX_ABI_ASSERT(offsetof(AMX, cip) == 16, "unexpected AMX.cip offset");
+AMX_ABI_ASSERT(offsetof(AMX, usertags) == 44, "unexpected AMX.usertags offset");
+AMX_ABI_ASSERT(offsetof(AMX, userdata) == 60, "unexpected AMX.userdata offset");
+AMX_ABI_ASSERT(offsetof(AMX, error) == 76, "unexpected AMX.error offset");
+AMX_ABI_ASSERT(offsetof(AMX, paramcount) == 80, "unexpected AMX.paramcount offset");
+AMX_ABI_ASSERT(offsetof(AMX, sysreq_d) == 100, "unexpected AMX.sysreq_d offset");
+#if !defined JIT
+AMX_ABI_ASSERT(sizeof(AMX) == 104, "unexpected AMX layout");
+#endif
+
+AMX_ABI_ASSERT(sizeof(AMX_HEADER) == 56, "unexpected AMX_HEADER layout");
+AMX_ABI_ASSERT(offsetof(AMX_HEADER, magic) == 4, "unexpected AMX_HEADER.magic offset");
+AMX_ABI_ASSERT(offsetof(AMX_HEADER, flags) == 8, "unexpected AMX_HEADER.flags offset");
+AMX_ABI_ASSERT(offsetof(AMX_HEADER, cod) == 12, "unexpected AMX_HEADER.cod offset");
+AMX_ABI_ASSERT(offsetof(AMX_HEADER, natives) == 36, "unexpected AMX_HEADER.natives offset");
+AMX_ABI_ASSERT(offsetof(AMX_HEADER, nametable) == 52, "unexpected AMX_HEADER.nametable offset");
+
+#undef AMX_ABI_ASSERT
 
 #define AMX_MAGIC       0xf1e0
 
