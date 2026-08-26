@@ -42,6 +42,11 @@ function(samp_add_plugin target)
 
     set_target_properties("${target}" PROPERTIES
         PREFIX ""
+
+        C_STANDARD 11
+        C_STANDARD_REQUIRED YES
+        C_EXTENSIONS NO
+
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden
         VISIBILITY_INLINES_HIDDEN YES
