@@ -30,9 +30,6 @@
 #if defined FREEBSD && !defined __FreeBSD__
   #define __FreeBSD__
 #endif
-#if defined LINUX || defined __FreeBSD__ || defined __OpenBSD__ || defined __APPLE__
-  #include "sclinux.h"
-#endif
 
 #ifndef AMX_H_INCLUDED
 #define AMX_H_INCLUDED
